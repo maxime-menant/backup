@@ -45,7 +45,7 @@ module Backup
           destination_path = File.join(remote_path, filename)
           Logger.info "Creating Block Blob '#{container.name}/#{destination_path}'..."
 
-          blobs.create_block_blob(container.name, destination_path, ::File.open(source_path, 'rb') { |file| file.read })
+          blob_service.create_block_blob(container.name, destination_path, ::File.open(source_path, 'rb') { |file| file.read })
 
           # blob = blob_service.create_block_blob(container.name, dest, "")
           # chunk_ids = []
