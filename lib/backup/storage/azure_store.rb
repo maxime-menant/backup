@@ -38,9 +38,9 @@ module Backup
       def transfer!
         package.filenames.each do |filename|
           source_path = File.join(Config.tmp_path, filename)
-          remote_path = File.join(source_path, filename)
-          Logger.info "Storage::AzureStore uploading '#{container.name}/#{remote_path}'"
-          blob_service.create_block_blob(container.name, remote_path, ::File.open(source_path, "rb", &:read))
+          destination_path = File.join(remote_path, filename)
+          Logger.info "Storage::AzureStore uploading '#{container.name}/#{destination_path}'"
+          blob_service.create_block_blob(container.name, destination_path, ::File.open(source_path, "rb", &:read))
         end
       end
 
@@ -50,9 +50,9 @@ module Backup
         Logger.info "Removing backup package dated #{package.time}..."
 
         package.filenames.each do |filename|
-          remote_path = "#{remote_path_for(package)}/#{filename}"
-          Logger.info "Storage::AzureStore deleting '#{remote_path}'"
-          blob_service.delete_blob(container.name, remote_path)
+          destination_path = "#{remote_path_for(package)}/#{filename}"
+          Logger.info "Storage::AzureStore deleting '#{destination_path}'"
+          blob_service.delete_blob(container.name, destination_path)
         end
       end
 
