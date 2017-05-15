@@ -49,7 +49,7 @@ module Backup
           blocks = []
           File.open(source_path, 'rb') do |file|
             while (file_bytes = file.read(@chunk_size))
-              block_id = Base64.strict_encode64(RandomString.random_name)
+              block_id = Base64.strict_encode64(SecureRandom.uuid)
               Logger.info "Storage::AzureStore uploading '#{container.name}/#{destination_path} - block: #{block_id}'"
               blob_service.put_blob_block(container_name, destination_path, block_id, file_bytes)
               blocks << [block_id]
