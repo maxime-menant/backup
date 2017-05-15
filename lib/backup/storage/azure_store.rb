@@ -7,11 +7,12 @@ module Backup
       include Storage::Cycler
       class Error < Backup::Error; end
 
-      attr_accessor :storage_account, :storage_access_key, :container_name, :retry_count, :retry_interval
+      attr_accessor :storage_account, :storage_access_key, :container_name, :chunk_size, :retry_count, :retry_interval
 
       def initialize(model, storage_id = nil)
         super
         @path           ||= "backups"
+        @chunk_size     ||= 1024 * 1024 * 64 # 64 MB
         @retry_count    ||= 3
         @retry_interval ||= 30
         path.sub!(%r{^/}, "")
@@ -40,7 +41,23 @@ module Backup
           source_path = File.join(Config.tmp_path, filename)
           destination_path = File.join(remote_path, filename)
           Logger.info "Storage::AzureStore uploading '#{container.name}/#{destination_path}'"
-          blob_service.create_block_blob(container.name, destination_path, ::File.open(source_path, "rb", &:read))
+
+          # https://github.com/Azure/azure-storage-ruby/issues/15
+          # blob_service.create_block_blob(container.name, destination_path, ::File.open(source_path, "rb", &:read))
+
+          # Following: https://github.com/Azure-Samples/storage-blob-ruby-getting-started/blob/master/blobs_advanced.rb#L132
+          blocks = []
+          File.open(source_path, 'rb') do |file|
+            while (file_bytes = file.read(@chunk_size))
+              block_id = Base64.strict_encode64(RandomString.random_name)
+              Logger.info "Storage::AzureStore uploading '#{container.name}/#{destination_path} - block: #{block_id}'"
+              blob_service.put_blob_block(container_name, destination_path, block_id, file_bytes)
+              blocks << [block_id]
+            end
+          end
+
+          Logger.info "Storage::AzureStore finalizing upload"
+          blob_service.commit_blob_blocks(container_name, destination_path, blocks)
         end
       end
 
