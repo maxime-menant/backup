@@ -12,7 +12,7 @@ module Backup
       def initialize(model, storage_id = nil)
         super
         @path           ||= "backups"
-        @chunk_size     ||= 1024 * 1024 * 64 # 64 MB
+        @chunk_size     ||= 1024 * 1024 * 4 # 4 MB
         @retry_count    ||= 3
         @retry_interval ||= 30
         path.sub!(%r{^/}, "")
