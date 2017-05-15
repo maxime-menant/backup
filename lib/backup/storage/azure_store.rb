@@ -26,7 +26,7 @@ module Backup
       end
 
       def blob_service_with_retry_filter
-        @blob_service_with_retry_filter = Azure::Blob::BlobService.new
+        @blob_service_with_retry_filter = Azure::Storage::Blob::BlobService.new
         @blob_service_with_retry_filter.with_filter(Azure::Storage::Core::Filter::LinearRetryPolicyFilter.new)
         @blob_service_with_retry_filter
       end
