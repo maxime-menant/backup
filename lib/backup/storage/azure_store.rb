@@ -7,17 +7,13 @@ module Backup
       include Storage::Cycler
       class Error < Backup::Error; end
 
-      # Azure credentials
-      attr_accessor :storage_account, :storage_access_key
-
-      # Azure Storage Container
-      attr_accessor :container_name, :container
-      attr_accessor :blob_service, :chunk_size
+      attr_accessor :storage_account, :storage_access_key, :container_name, :retry_count, :retry_interval
 
       def initialize(model, storage_id = nil)
         super
-        @path       ||= "backups"
-        @chunk_size ||= 1024 * 1024 * 4 # bytes
+        @path           ||= "backups"
+        @retry_count    ||= 3
+        @retry_interval ||= 30
         path.sub!(%r{^/}, "")
 
         check_configuration
@@ -27,7 +23,7 @@ module Backup
 
       def blob_service_with_retry_filter
         @blob_service_with_retry_filter = Azure::Storage::Blob::BlobService.new
-        @blob_service_with_retry_filter.with_filter(Azure::Storage::Core::Filter::LinearRetryPolicyFilter.new)
+        @blob_service_with_retry_filter.with_filter(Azure::Storage::Core::Filter::LinearRetryPolicyFilter.new(@retry_count, @retry_interval))
         @blob_service_with_retry_filter
       end
 
@@ -42,23 +38,9 @@ module Backup
       def transfer!
         package.filenames.each do |filename|
           source_path = File.join(Config.tmp_path, filename)
-          destination_path = File.join(remote_path, filename)
-          Logger.info "Creating Block Blob '#{container.name}/#{destination_path}'..."
-
-          blob_service.create_block_blob(container.name, destination_path, ::File.open(source_path, 'rb') { |file| file.read })
-
-          # blob = blob_service.create_block_blob(container.name, dest, "")
-          # chunk_ids = []
-          #
-          # File.open(src, "r") do |fh_in|
-          #   until fh_in.eof?
-          #     chunk = sprintf("%05d", (fh_in.pos / chunk_size))
-          #     Logger.info "Storing blob '#{blob.name}/#{chunk}'..."
-          #     blob_service.create_blob_block(container.name, blob.name, chunk, fh_in.read(chunk_size))
-          #     chunk_ids.push([chunk])
-          #   end
-          # end
-          # blob_service.commit_blob_blocks(container.name, blob.name, chunk_ids)
+          remote_path = File.join(remote_path, filename)
+          Logger.info "Storage::AzureStore uploading '#{container.name}/#{remote_path}'"
+          blob_service.create_block_blob(container.name, remote_path, ::File.open(source_path, "rb", &:read))
         end
       end
 
@@ -68,7 +50,9 @@ module Backup
         Logger.info "Removing backup package dated #{package.time}..."
 
         package.filenames.each do |filename|
-          blob_service.delete_blob(container.name, "#{remote_path_for(package)}/#{filename}")
+          remote_path = "#{remote_path_for(package)}/#{filename}"
+          Logger.info "Storage::AzureStore deleting '#{remote_path}'"
+          blob_service.delete_blob(container.name, remote_path)
         end
       end
 
