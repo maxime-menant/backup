@@ -38,7 +38,7 @@ module Backup
       def transfer!
         package.filenames.each do |filename|
           source_path = File.join(Config.tmp_path, filename)
-          remote_path = File.join(remote_path, filename)
+          remote_path = File.join(source_path, filename)
           Logger.info "Storage::AzureStore uploading '#{container.name}/#{remote_path}'"
           blob_service.create_block_blob(container.name, remote_path, ::File.open(source_path, "rb", &:read))
         end
