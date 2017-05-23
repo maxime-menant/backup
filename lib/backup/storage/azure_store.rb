@@ -38,15 +38,8 @@ module Backup
           Logger.info "Storage::Azure uploading '#{container.key}/#{destination_path}'"
 
           File.open(source_path, 'rb') do |file|
-            options = {
-              key: destination_path,
-              body: file
-            }
-
-            block_blob = container.files.create(options)
+            container.files.create({ key: destination_path, body: file })
           end
-
-          Logger.info "Storage::Azure uploaded '#{container.key}/#{block_blob.key}'"
         end
       end
 
