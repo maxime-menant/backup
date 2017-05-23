@@ -38,6 +38,7 @@ module Backup
   ##
   # Autoload Backup storage files
   module Storage
+    autoload :AzureStore, File.join(STORAGE_PATH, 'azure_store')
     autoload :Base,       File.join(STORAGE_PATH, 'base')
     autoload :Cycler,     File.join(STORAGE_PATH, 'cycler')
     autoload :S3,         File.join(STORAGE_PATH, 's3')
