@@ -31,13 +31,14 @@ group :production do
   gem 'net-sftp'
   gem 'mail', '= 2.6.3' # patched
   gem 'pagerduty'
-  gem 'twitter'
-  gem 'hipchat'
-  gem 'flowdock'
-  gem 'json'
+  gem 'twitter', '~> 6.0.0'
+  gem 'hipchat', '~> 1.6.0'
+  gem 'flowdock', '~> 0.7.1'
+  gem 'json', '= 2.1.0'
   gem 'dogapi'
   gem 'aws-ses'
-  gem 'qiniu', '~> 6.5.1'
+  gem 'xmlrpc'
+  # gem 'qiniu', '~> 6.8.1'
 end
 
 gem 'rspec'
