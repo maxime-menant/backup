@@ -38,6 +38,9 @@ group :production do
   gem 'dogapi'
   gem 'aws-ses'
   gem 'xmlrpc'
+  gem 'fog-core', '~> 1.43'
+  gem 'fog-azure-rm', '~> 0.3.5'
+
   # gem 'qiniu', '~> 6.8.1'
 end
 
